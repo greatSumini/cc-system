@@ -83,12 +83,14 @@ test -f .claude/agents/tech-critic-lead.md
 | `docs/user-intervention.md`  | 인간 개입이 필요한 운영 절차 기록처.                               |
 | `persuasion-data/personas/`  | 빈 디렉토리로 시작. 최소 1명의 페르소나 필요 (ideation 필수).      |
 | `persuasion-data/runs/`      | 빈 디렉토리로 시작. 시뮬 결과가 여기 쌓임.                         |
-| `persuasion-data/probe_tasks.md` | UX probe task 목록. `install-persuasion-review.md` 의 3.3 참조.|
-| `persuasion-data/ux_probe_adapter.py` | 서비스 기동 어댑터. `install-persuasion-review.md` 의 3.2 참조.|
+| `persuasion-data/probe_tasks.md` | (웹 스택만) UX probe task 목록. `install-persuasion-review.md` 의 3.5 참조. |
+| `persuasion-data/ux_probe_adapter.py` | (웹 스택만) 서비스 기동 어댑터. `install-persuasion-review.md` 의 3.0~3.4 참조. |
 | `iterations/`                | 빈 디렉토리로 시작. run-server 가 이터레이션별 산출물 저장.        |
 | `tasks/`                     | 빈 디렉토리로 시작. plan-and-build 가 task/phase 생성.             |
 
 **페르소나 생성**과 **ux_probe_adapter 작성**은 대화형이므로 이 두 단계에서는 사용자에게 질문해도 된다. 나머지는 프로젝트 코드와 기존 README 를 읽어 추론한 뒤 한 번에 요약 보여주고 확인받는다.
+
+**스택별 주의**. `ux_probe_adapter.py` 와 `probe_tasks.md` 는 **HTTP 로 접근 가능한 웹 스택일 때만** 만든다. iOS/Android 네이티브 · Flutter 모바일 · React Native · CLI 는 5a0 UX probe 가 적용되지 않는다 (어댑터 없으면 자동 skip). 프로젝트에 이미 `npm run dev` / `make dev` / `docker compose up` 같은 dev 진입점이 있으면 그걸 그대로 subprocess 로 감싸라 — 재발명하지 말 것. 자세한 스택 분기는 [`install-persuasion-review.md`](install-persuasion-review.md) Step 3.0 참조.
 
 ---
 
