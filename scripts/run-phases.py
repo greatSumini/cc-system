@@ -25,6 +25,14 @@ ROOT = find_project_root()
 TASKS_DIR = ROOT / "tasks"
 TOP_INDEX_FILE = TASKS_DIR / "index.json"
 
+# Absolute path to the Claude CLI. subprocess.Popen does not expand zsh
+# aliases, so resolving `claude` via $PATH can silently pick up a stale
+# pnpm-global install. Pin to the known-good binary; override via
+# CLAUDE_BIN env var if needed.
+CLAUDE_BIN = os.environ.get(
+    "CLAUDE_BIN", "/Users/choesumin/.claude/local/claude"
+)
+
 KST = timezone(timedelta(hours=9))
 
 COMMIT_MSG_TEMPLATE = "feat({task_name}): phase {phase_num} — {phase_name}"
@@ -291,7 +299,7 @@ def run_phase(task_dir: Path, phase: dict, preamble: str, gh_env: dict[str, str]
     output_file = task_dir / f"phase{phase_num}-output.json"
 
     cmd = [
-        "claude",
+        CLAUDE_BIN,
         "-p",
         "--dangerously-skip-permissions",
         "--model", "sonnet",

@@ -45,6 +45,14 @@ ITERATIONS_DIR = ROOT / "iterations"
 SLEEP_BETWEEN_SEC = 10
 IDEATION_MAX_ATTEMPTS = 3
 
+# Absolute path to the Claude CLI. subprocess.Popen does not expand zsh
+# aliases, so resolving `claude` via $PATH can silently pick up a stale
+# pnpm-global install. Pin to the known-good binary; override via
+# CLAUDE_BIN env var if needed.
+CLAUDE_BIN = os.environ.get(
+    "CLAUDE_BIN", "/Users/choesumin/.claude/local/claude"
+)
+
 TIMEOUT_IDEATION_SEC = 45 * 60
 TIMEOUT_COMMIT_SEC = 10 * 60
 TIMEOUT_BUILD_SEC = 4 * 60 * 60
@@ -126,7 +134,7 @@ def run_claude(prompt: str, log_file: Path, timeout_sec: float) -> int:
     Kills the process after timeout_sec. On timeout, a note is written
     to the log and the returned exit code reflects the signal.
     """
-    cmd = ["claude", "-p", "--dangerously-skip-permissions", prompt]
+    cmd = [CLAUDE_BIN, "-p", "--dangerously-skip-permissions", prompt]
     with open(log_file, "w") as lf:
         proc = subprocess.Popen(
             cmd,
