@@ -60,8 +60,9 @@ bash <cc-system>/.claude/skills/ship/scripts/ship.sh
 
 `ship.sh` 가 하는 일: 프리플라이트(클린 트리·non-default 브랜치·base 대비
 ahead 확인) → `git push -u origin HEAD` → 기존 PR 재사용 또는 `gh pr create`
-→ `gh pr merge --squash --delete-branch`. 즉시 머지가 required check 로
-막히면 **auto-merge 로 큐잉**하고 그 사실을 정직하게 보고한다.
+→ `gh pr merge --squash`. 즉시 머지가 required check 로 막히면 **auto-merge
+로 큐잉**하고 그 사실을 정직하게 보고한다. 머지 성공 후 원격 브랜치는 따로
+삭제(best-effort)한다.
 
 옵션: `--base <b>`, `--title`, `--body`, `--no-merge`(PR만), `--draft`.
 
@@ -73,7 +74,7 @@ ahead 확인) → `git push -u origin HEAD` → 기존 PR 재사용 또는 `gh p
 - `⏳ auto-merge queued` — check 통과 후 자동 머지 예정. **"머지됨"이라고
   말하지 말 것.** check 가 끝나면 머지된다고 안내.
 - auto-merge 불가(exit 3) — PR 은 열려 있음. check 통과를 기다렸다가
-  (필요시 polling) `gh pr merge <url> --squash --delete-branch` 로 마무리.
+  (필요시 polling) `gh pr merge <url> --squash` 로 마무리.
 
 ## 여러 repo 출하
 
@@ -83,7 +84,10 @@ repo 에 대해 동작하므로 repo-agnostic 하다. 한 repo 가 막혀도(검
 
 ## worktree 주의
 
-`--delete-branch` 는 머지 후 로컬 브랜치 삭제를 시도한다. 그 브랜치가 다른
-worktree 에 체크아웃돼 있으면 로컬 삭제가 실패할 수 있으나 **원격 머지는 이미
-성공**한 상태다. `ship.sh` 는 머지 성공 여부를 `gh pr view` 로 재확인하므로
-로컬 정리 실패를 머지 실패로 오인하지 않는다.
+`gh pr merge --delete-branch` 는 머지 후 로컬을 base 브랜치로 전환하려 하는데,
+base 가 다른 worktree 에 체크아웃돼 있으면
+(`fatal: '<base>' is already used by worktree …`) 실패한다. 그래서 `ship.sh`
+는 `--delete-branch` 를 쓰지 않고, 머지 후 **원격 브랜치만 따로** 삭제하며
+로컬 브랜치는 건드리지 않는다. 또한 머지 판정을 **exit code 가 아니라
+`gh pr view` 의 실제 PR 상태**로 한다 — gh 가 머지 성공 후 로컬 단계에서
+non-zero 로 끝나도 머지 실패로 오인하지 않는다.

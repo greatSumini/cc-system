@@ -96,29 +96,48 @@ if [ "$NO_MERGE" = "1" ]; then
 fi
 
 # ── Squash merge ───────────────────────────────────────────────────────────
-MERGE_ARGS=(--squash --delete-branch)
+# Deliberately NOT using `--delete-branch`: gh would then try to switch the
+# local checkout to the base branch, which fails when base is checked out in
+# another worktree ("fatal: '<base>' is already used by worktree at …"). We
+# delete the remote branch separately below and leave the local branch alone.
+MERGE_ARGS=(--squash)
 [ "${SHIP_ADMIN:-0}" = "1" ] && MERGE_ARGS+=(--admin)
 
 info "squash-merging…"
-if gh pr merge "$PR_URL" "${MERGE_ARGS[@]}" 2>/tmp/ship-merge-err; then
-  :
-else
+gh pr merge "$PR_URL" "${MERGE_ARGS[@]}" 2>/tmp/ship-merge-err
+MERGE_RC=$?
+# Trust the PR state, not the exit code: gh can exit non-zero on a post-merge
+# local step even though the remote merge already succeeded.
+STATE="$(gh pr view "$PR_URL" --json state --jq .state 2>/dev/null || echo UNKNOWN)"
+
+if [ "$STATE" != "MERGED" ] && [ "$MERGE_RC" -ne 0 ]; then
   cat /tmp/ship-merge-err >&2
   # Blocked by pending/required checks? Queue an auto-merge instead.
   if grep -qiE 'not mergeable|required|checks|protected|pending' /tmp/ship-merge-err; then
     info "immediate merge blocked (likely required checks) — enabling auto-merge…"
-    gh pr merge "$PR_URL" --squash --delete-branch --auto 2>/tmp/ship-merge-err2 \
-      || { cat /tmp/ship-merge-err2 >&2; info "auto-merge unavailable; PR left open for checks. Poll & merge later: gh pr merge $PR_URL --squash --delete-branch"; echo "$PR_URL"; exit 3; }
+    if gh pr merge "$PR_URL" --squash --auto 2>/tmp/ship-merge-err2; then
+      STATE="$(gh pr view "$PR_URL" --json state --jq .state 2>/dev/null || echo OPEN)"
+    else
+      cat /tmp/ship-merge-err2 >&2
+      info "auto-merge unavailable; PR left open for checks. Poll & merge later: gh pr merge $PR_URL --squash"
+      echo "$PR_URL"; exit 3
+    fi
   else
     die "merge failed (see error above)"
   fi
 fi
 
+# ── Branch cleanup (best-effort; never fatal) ───────────────────────────────
+if [ "$STATE" = "MERGED" ]; then
+  git push origin --delete "$BRANCH" >/dev/null 2>&1 \
+    && info "deleted remote branch $BRANCH" \
+    || info "remote branch $BRANCH not deleted (already gone or protected) — non-fatal"
+fi
+
 # ── Honest final state ─────────────────────────────────────────────────────
-STATE="$(gh pr view "$PR_URL" --json state --jq .state 2>/dev/null || echo UNKNOWN)"
 echo "$PR_URL"
 case "$STATE" in
-  MERGED) info "✅ MERGED (squash): $PR_URL" ;;
+  MERGED) info "✅ MERGED (squash): $PR_URL  (local branch '$BRANCH' kept — delete manually if desired)" ;;
   OPEN)   info "⏳ auto-merge queued — will squash-merge when checks pass: $PR_URL" ;;
   *)      info "state=$STATE — verify manually: $PR_URL" ;;
 esac
