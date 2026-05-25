@@ -30,10 +30,18 @@ prompts/
   task-create.md         plan-and-build 이 따르는 task/phase 파일 규격
 
 prompt/
-  install-harness.md             ← 자율 주행 하네스 전체를 이식하는 프롬프트
-  install-persuasion-review.md   ← persuasion-review 만 단독 이식하는 프롬프트
+  install-harness.md               ← 자율 주행 하네스 전체를 이식하는 프롬프트
+  install-persuasion-review.md     ← persuasion-review 만 단독 이식하는 프롬프트
+  install-findings-cycles-goals.md ← findings→cycles→goals 빌드 하네스 이식 프롬프트
   crystalize-prompt.md
   design-pipeline.md
+
+findings-cycles-goals/   vooster 의 findings→cycles→goals 하네스를 스택 중립으로 추출한 이식 키트
+  scripts/               goal-agnostic 오케스트레이터 (completion/active-check, next-task, gate-cache, rigor)
+  goals/                 미션 스택 (_meta + 0-example 트리오 + AGENTS.md)
+  cycles/ · findings/    루프 드라이버 / 부채 큐 규약 (AGENTS.md + EXAMPLE)
+  guidelines/ · docs/    goal-iteration.md · goal-design.md
+  prompts/cycle-generate.md  사이클 문서 생성 메타 프롬프트
 
 docs/
   cc/                    Claude Code hook / slash-command / sub-agent 참고 문서
@@ -65,3 +73,17 @@ docs/
 - `claude` CLI 설치 + 로그인
 
 `HARNESS_HEADLESS=1` 이 무인 모드 시그널이다. (레거시로 `BET_HEADLESS` 도 fallback 으로 수용됨 — 추후 제거 예정.)
+
+### findings → cycles → goals 빌드 하네스 이식
+
+[`vibemafiaclub/vooster`](https://github.com/vibemafiaclub/vooster) 가 쓰는 **gate 기반 자율 빌드 하네스**를 스택 중립으로 추출한 키트(`findings-cycles-goals/`)다. 위의 `install-harness` (ideation→build 루프)와는 별개의 시스템으로, 루핑 에이전트가 **machine-verified gate** 로 "완료"를 증명하며 미션 스택을 쌓아 올린다.
+
+[`prompt/install-findings-cycles-goals.md`](prompt/install-findings-cycles-goals.md) 를 타겟 프로젝트 Claude Code 세션에 붙여넣으면 `findings-cycles-goals/` 의 자산을 clone → 복사하고, `_meta` 검사와 goal 0 을 타겟 스택에 맞게 적응시킨 뒤 검증까지 한다.
+
+3-자산 모델:
+
+- **findings** (`docs/findings/`) — out-of-scope 발견을 잃지 않는 부채/통찰 큐 (검증 없음).
+- **cycles** (`cycles/`) — 무한 루프 에이전트에 넘기는 한 세션 프롬프트 (이력).
+- **goals** (`goals/`) — `<n>-<name>.{md,gates.sh,next-task.sh}` 세 파일/goal. 가장 낮은 번호의 실패 goal 이 active. `scripts/completion-check.sh` 가 전체 체인을 병렬 검증한다.
+
+설계·규약 단일 출처는 키트 안의 `docs/goal-design.md`, `guidelines/goal-iteration.md`, 각 폴더 `AGENTS.md` 다. 자세한 매핑은 [`findings-cycles-goals/README.md`](findings-cycles-goals/README.md).
