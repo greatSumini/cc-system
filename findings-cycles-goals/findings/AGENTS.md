@@ -129,9 +129,17 @@ Each finding should be **scannable in 60 seconds.** If yours runs past
 
 ## Lifecycle
 
-1. **Create** — when a debt item surfaces during a goal iteration that is
-   out-of-scope for the active goal. Author the file with frontmatter +
-   body, commit on the same branch as the work that surfaced it.
+1. **Create** — when a debt item or insight surfaces that is out-of-scope
+   for the active goal. Two recognized sources: **(a) during a goal
+   iteration** — the agent notices adjacent debt while closing something
+   else; **(b) from review dialogue** — the human↔agent discussion of
+   already-built work. In the agent-engineering flow the agent designs and
+   implements, so review is for communication and mutual learning, not
+   verification (the goal gates already machine-verify regression). The
+   insights such a review surfaces are findings exactly like in-iteration
+   ones — queue them here so the loop closes. Author the file with
+   frontmatter + body, commit on the same branch as the work that surfaced
+   it.
 2. **Update** — append `status_notes` lines (newest first) as sub-items
    close. Cross-link the closing commit / gate.
 3. **Promote** — when a finding warrants its own goal, author
