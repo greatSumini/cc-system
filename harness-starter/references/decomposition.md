@@ -40,6 +40,11 @@ This judgment is **LLM (planner) reasoning, not a deterministic rule**. The rule
 
 - Nodes to run in parallel in the same wave must be limited to **`scope: file:<path>` or `module:<name>`** → prevents concurrent write conflicts.
 - If two logical steps **modify the same file**: either (a) merge into one node, or (b) serialize with `blockedBy`. Never let two nodes write the same file in parallel.
+- **Crosscutting / shared files are serialization points.** Files that many nodes must touch — barrel/index (`index.ts`), route registries (`routes.ts`), `package.json`, dependency-injection containers, schema/migration indexes — leak the "file-scoped = independent" assumption. Handle them one of two ways:
+  - **(a) Wire-up node**: extract the shared-file edits into a single dedicated node, and make it `blockedBy` the nodes that produce what it wires up (it runs last, alone).
+  - **(b) Serialize**: if the edits can't be separated, chain the touching nodes with `blockedBy` so they never run in the same wave.
+  Either way: **no two nodes write a shared file in parallel.**
+- Note: file-scoping prevents *write* conflicts, not *semantic* ones (node A renames a symbol node B uses). If a node's change alters an interface another node depends on, add a `blockedBy` edge.
 
 ## 4. Dependency edges (blockedBy): real ordering only
 
@@ -65,6 +70,8 @@ Tag each node with a suggested tier (orchestrator/user maps to an actual model):
 3. Does each node have a verifiable acceptanceCriteria?
 4. Are parallel nodes file/module-scoped so there are no write conflicts?
 5. Do no two parallel nodes touch the same file?
+5b. Are crosscutting/shared files (index, routes, package.json, schema, DI) isolated into a wire-up node or serialized? (no shared-file parallel writes)
+5c. Do no two parallel nodes have a semantic dependency (one alters an interface the other uses)? If they do, add blockedBy.
 6. Is blockedBy applied only to real orderings? (no unnecessary serialization)
 7. Is the blockedBy graph free of cycles? (DAG)
 8. Is the plan actionable? → if yes, stop.

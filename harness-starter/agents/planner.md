@@ -21,7 +21,13 @@ You must first study `references/decomposition.md` (decomposition criteria), and
    `acceptanceCriteria` an implementer can use to judge completion. **Stop once the plan is actionable** (no over-decomposition).
 3. **Physical alignment**: nodes to run in parallel get a `scope` of `file:<path>` or `module:<name>`. Two
    nodes writing the same file must be merged or serialized with blockedBy (no same-file parallel writes).
-4. **Dependencies**: `blockedBy` on real orderings only (e.g. shared types → consumers). No unnecessary serialization. **No cycles (DAG)**.
+   - **Crosscutting/shared files** (barrel/`index`, `routes`, `package.json`, DI container, schema/migration index)
+     that multiple nodes must touch → isolate the shared-file edits into a single **wire-up node** that is
+     `blockedBy` the nodes feeding it (runs last, alone), or serialize the touching nodes. Never let two nodes
+     write a shared file in the same wave.
+4. **Dependencies**: `blockedBy` on real orderings only (e.g. shared types → consumers). Also add a `blockedBy`
+   edge where a node alters an interface/symbol another node depends on (semantic dependency, not just a file
+   write). No unnecessary serialization. **No cycles (DAG)**.
 5. **Model tier**: suggest a `modelTier` (low/medium/high) per node.
 
 ## Output

@@ -47,7 +47,26 @@ No need to use it whole. Since artifacts are contracts:
 - Use this harness up to plan only, implement with another tool → hand over `plan.md`.
 - Drop an externally produced `spec.md`/`plan.md` into `.harness/` and that stage is skipped automatically.
 
+## Concurrency model
+
+Parallel safety is achieved **without locks**, by two facts:
+- **Single writer**: only the orchestrator writes task status, and it does so serially after each wave's parallel implementers return at a barrier. No concurrent status writes → no lock needed.
+- **Disjoint file scopes**: nodes in the same wave are file/module-scoped, so parallel implementers never write the same file.
+
+The second guarantee rests on the planner's decomposition quality, so the kit defends it in pure prompt (no infra):
+- the planner isolates **crosscutting/shared files** (index, routes, `package.json`, schema, DI) into a serialized **wire-up node**;
+- the implementer has a **scope guard** — if it must touch a shared file, it reports instead of editing, and the orchestrator turns that into a serialized node;
+- **when in doubt, serialize** — the orchestrator runs uncertain nodes in separate waves. Parallelism is an optimization, not a requirement.
+
+### Optional: worktree isolation (opt-in, not default)
+
+For **wide parallel batches where you don't trust scoping**, you can run each implementer in its own `git worktree` for hard write isolation — the approach OMC/OmO use. It is **deliberately not built in** because it:
+- requires git and per-worktree stack setup (node_modules/env/build) → breaks "stack-neutral, pure-prompt";
+- does **not** solve crosscutting files — it relocates a lost-write into a **merge conflict** at merge-back time, so you still need the wire-up-node rule above.
+
+Enable it only on a git repo, accepting the merge step and stack setup, when conflicts actually prove frequent. For the typical 3–6 node plan, the default model above is sufficient.
+
 ## Non-goals
 
-- No heavy concurrency infrastructure like file locks or worktree isolation (file-scoped wavefronts suffice for parallelism).
 - No forced model routing (`modelTier` is a suggestion; the mapping is up to the user/orchestrator).
+- No built-in worktree isolation or file locks (see Concurrency model above for why, and the opt-in path).

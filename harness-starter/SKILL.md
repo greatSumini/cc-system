@@ -54,6 +54,12 @@ loop:
 
 - Within one wave, issue **multiple implementer Tasks in the same message** (do not wait for one to finish).
 - If a node fails: do not advance its dependents; re-delegate the failed node once (attach a cause summary). If it still fails, stop and report.
+- **Scope escalation**: if an implementer reports it needs to edit a shared/crosscutting file outside its scope
+  (it must NOT have edited it), add a new **wire-up node** scoped to that file, `blockedBy` the nodes that feed it,
+  and schedule it in a later wave. This converts a would-be parallel collision into a serialized node.
+- **When in doubt, serialize.** Parallelism is an optimization, not a requirement. If you can't be confident two
+  ready nodes are truly independent (disjoint files, no semantic dependency), run them in separate waves instead.
+  A single-file or uncertain plan should just run sequentially — correctness over speed.
 
 ### 5. Verify
 - When all nodes are done, delegate to `harness-verifier` → produces `report.md`. Input = spec (acceptance criteria) + plan (nodes) + actual changes.
