@@ -191,7 +191,7 @@ Command naming:
     parser.add_argument('--description', help='Command description')
     parser.add_argument('--allowed-tools', dest='allowed_tools', help='Comma-separated list of allowed tools')
     parser.add_argument('--argument-hint', dest='argument_hint', help='Hint for command arguments')
-    parser.add_argument('--model', help='Specific model to use (e.g., claude-3-5-haiku-20241022)')
+    parser.add_argument('--model', help='Specific model to use (e.g., claude-haiku-4-5-20251001)')
 
     args = parser.parse_args()
 

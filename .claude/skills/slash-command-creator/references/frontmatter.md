@@ -51,7 +51,7 @@ argument-hint: add [tagId] | remove [tagId] | list
 Specific model to use for this command. See [Models overview](https://docs.claude.com/en/docs/about-claude/models/overview).
 
 ```yaml
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 model: claude-sonnet-4-5-20250929
 ```
 
@@ -69,6 +69,6 @@ disable-model-invocation: true
 allowed-tools: Bash(git add:*), Bash(git status:*), Bash(git commit:*)
 argument-hint: [message]
 description: Create a git commit with staged changes
-model: claude-3-5-haiku-20241022
+model: claude-haiku-4-5-20251001
 ---
 ```
